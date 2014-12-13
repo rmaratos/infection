@@ -17,8 +17,8 @@ class User(object):
         student.coaches.append(self)
 
     def __str__(self):
-        return "User: {self.name} ({self.user_id})".format(self=self)
+        return "User: {self.name} coaching {self.students}".format(self=self)
 
     def __repr__(self):
-        return str(self)
+        return self.name
 
