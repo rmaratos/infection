@@ -1,7 +1,12 @@
 class User(object):
     """
     Basic User Class for Infection Simulation
+
+    name and version are both optional and will default to an auto-incrementing
+    user_id and None respectively
     """
+
+    # Used to uniquely identify users
     user_id = 0
 
     def __init__(self, name=None, version=None):
@@ -13,17 +18,26 @@ class User(object):
         self.coaches = []
 
     def add_student(self, student):
+        """Add student to user, and add this user as their coach"""
         self.students.append(student)
         student.coaches.append(self)
 
     def add_students(self, students):
+        """Add list of students to user"""
         for student in students:
+            # Prevent self referential coaching
             if student is not self:
                 self.add_student(student)
 
+    def infect(self, version):
+        """Infect user by changing their version"""
+        self.version = version
+
+    def infect_group(self, version):
+        self.group.infect(version)
+
     def __str__(self):
-        return "User: {self.name}(v{self.version}) coaching {self.students}".format(self=self)
+        return "{self.name}({self.version})".format(self=self)
 
     def __repr__(self):
-        return self.name
-
+        return str(self)
