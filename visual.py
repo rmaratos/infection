@@ -36,20 +36,27 @@ class VisualUser(object):
         x0, y0 = self.x, self.y
         for student in self.user.students:
             x1, y1 = student.visual.x, student.visual.y
+            print("({:.2f},{:.2f})->({:.2f},{:.2f})".format(x0, y0, x1, y1))
             d = distance(x0, y0, x1, y1)
-            print("d", d)
-            dx, dy = float(x1-x0), (y1-x0)
+            print("d:{:.2f}".format(d))
+            dx, dy = float(x1-x0), (y1-y0)
             if d > self.r + 5:
                 if dx:
-                    ax += 1000 / dx
+                    ax += 0.001*dx
                 if dy:
-                    ay -= 1000 / dy
+                    ay += 0.001*dy
+            else:
+                self.vx = 0
+                self.vy = 0
             # print("ax,ay", ax, ay)
         self.vx += ax
         self.vy += ay
+        self.vx *= 0.9
+        self.vy *= 0.9
         if ax or ay:
-            print("a:", ax, ay)
-            print("v:", self.vx, self.vy)
+            print("a:({:.2f},{:.2f})".format(ax, ay))
+            print("v:({:.2f},{:.2f})".format(self.vx, self.vy))
+
     def update_location(self):
         self.update_velocity()
         # print(self.x, self.y)
@@ -100,14 +107,16 @@ class Visual(object):
         self.update_locations()
 
     def timer(self):
-        self.timer_fired()
-        self.redraw_all()
+        if not self.paused:
+            self.timer_fired()
+            self.redraw_all()
         self.canvas.after(self.timer_delay, self.timer)
 
     def init_animation(self):
         self.users = []
+        self.paused = True
         self.timer_delay = 100
-        self.infection = Infection(num_users=2, min_students=0, max_students=2)
+        self.infection = Infection(num_users=100, min_students=0, max_students=2)
         self.raw_users = self.infection.network.users
         self.init_users()
         self.timer()
@@ -118,6 +127,9 @@ class Visual(object):
     def key_event(self, e):
         if e.keysym == 'r':
             self.init_animation()
+            self.paused = False
+        elif e.keysym == 'p':
+            self.paused = not self.paused
 
 
 Visual()
