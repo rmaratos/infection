@@ -52,7 +52,7 @@ class Network(object):
 
         # Create all users
         for user in self.user_data:
-            user_dict[user] = User(user)
+            temp_user_dict[user] = User(user)
 
         # Create student coach relationships
         for user_name in self.user_data:
