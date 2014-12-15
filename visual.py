@@ -127,8 +127,8 @@ class Visual(object):
         self.margin = 0.1*height
         self.width, self.height = width, height
         self.cx, self.cy = width/2, (height - self.margin)/2
-        self.canvas2 = Canvas(self.root, width=self.width, height=self.margin)
-        self.canvas2.pack()
+        self.toolbar_canvas = Canvas(self.root, width=self.width, height=self.margin)
+        self.toolbar_canvas.pack()
         self.canvas = Canvas(root, width=width, height=height)
         self.canvas.pack()
         self.init_animation()
@@ -163,13 +163,18 @@ class Visual(object):
         self.button.draw(self.canvas)
 
     def draw_toolbar(self):
-        self.canvas2.create_text(self.cx, 0.1*self.cy, text="INFECTION", font=("Impact", 24))
-        self.canvas2.create_line(0, 0.2*self.cy, self.width, 0.2*self.cy, width=2)
+        self.toolbar_canvas.create_text(self.cx, 0.1*self.cy, text="INFECTION", font=("Impact", 24))
+        self.toolbar_canvas.create_line(0, 0.2*self.cy, self.width, 0.2*self.cy, width=2)
         font = ("Impact", 20)
-        self.canvas2.create_text(self.cx*0.05, 0.1*self.cy, text="Total Infection: Click User", font=font, anchor="w")
-        self.canvas2.create_text(self.cx*1.95, 0.1*self.cy, text="Limited Infection", font=font, anchor="e")
-        self.limited_entry = Entry(self.canvas2, justify=CENTER, width=3)
-        self.canvas2.create_window(self.cx*1.95, 0.1*self.cy, window=self.limited_entry)
+        self.toolbar_canvas.create_text(self.cx*0.05, 0.1*self.cy, text="Total Infection: Click User", font=font, anchor="w")
+        self.toolbar_canvas.create_text(self.cx*1.8, 0.1*self.cy, text="Limited Infection", font=font, anchor="e")
+        self.limited_entry = Entry(self.toolbar_canvas, justify=CENTER, width=3)
+        self.toolbar_canvas.create_window(self.cx*1.85, 0.1*self.cy, window=self.limited_entry)
+        cx, cy = self.cx*1.95, self.margin/2
+        r = 0.5*cy
+        self.limited_button = (cx, cy, r)
+        self.toolbar_canvas.create_oval((cx-r, cy-r, cx+r, cy+r), width=2, fill="RED")
+        self.toolbar_canvas.create_text(cx, cy, text="X", font=("Courier Bold", 30))
 
     def redraw_all(self):
         self.canvas.delete(ALL)
@@ -240,22 +245,39 @@ class Visual(object):
             self.error_font_size += 2
             return
         self.infection = Infection(num_users=num_users, min_students=0, max_students=2)
+        self.num_users = num_users
         self.raw_users = self.infection.network.users
         self.init_users()
         self.draw_toolbar()
         self.mode = Mode.MAIN
 
+    def limited_infection(self):
+        size_text = self.limited_entry.get()
+        try:
+            size = int(size_text)
+            if not (1 <= size <= self.num_users):
+                raise ValueError
+        except ValueError:
+            print("Bad input")
+            return
+        self.infection.limited_infection(size, "test")
+        print("Limited infection of size", size, self.num_users)
+
     def mouse_event(self, e):
         x, y = e.x, e.y
-        # print("({e.x},{e.y})".format(e=e))
+        print("({e.x},{e.y})".format(e=e))
         if self.mode == Mode.SETUP:
             if self.button.clicked(x, y):
                 self.start_infection()
         if self.mode == Mode.MAIN:
-            for user in self.users:
-                if user.clicked(x, y):
-                    user.infect()
-                    break
+            cx, cy, r = self.limited_button
+            if distance(cx, cy, x, y) < r:
+                self.limited_infection()
+            else:
+                for user in self.users:
+                    if user.clicked(x, y):
+                        user.infect()
+                        break
 
     def key_event(self, e):
         if e.keysym == 'r':
@@ -266,6 +288,8 @@ class Visual(object):
         elif e.keysym == 's' and self.mode == Mode.START:
             self.mode = Mode.SETUP
             self.draw_setup_screen()
+        elif e.keysym == 'b' and self.mode == Mode.SETUP:
+            self.start_infection()
 
 
 Visual()
