@@ -1,5 +1,6 @@
 from network import Network, RandomNetwork
 import random
+import copy
 
 
 class Infection(object):
@@ -20,18 +21,33 @@ class Infection(object):
         print("Infecting:{}".format(user))
         self.total_infection(user, version)
 
+    def limited_infection(self, num_users, version):
+        """Infect num_users of users with version"""
+        remaining = num_users
+        groups = self.network.groups
+        sizes = sorted(groups.keys(), reverse=True)
+        for size in sizes:
+            if size > remaining:
+                continue
+            for group in groups[size]:
+                if size > remaining:
+                    break
+                group.infect(version)
+                remaining -= size
+        return num_users - remaining
+
     def __str__(self):
         return str(self.network)
 
-
-test_data = {"A": ["B"],
-             "B": [],
-             "C": [],
-             "D": ["C"]}
+#
+# test_data = {"A": ["B"],
+#              "B": [],
+#              "C": [],
+#              "D": ["C"]}
 # i = Infection(test_data)
 i = Infection(num_users=10, min_students=0, max_students=2)
 print(i.network.get_groups())
 # print(i)
-i.infect_random_user(1.0)
+print(i.limited_infection(5, 3))
 print(i.network.get_groups())
 # print(i)

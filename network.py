@@ -16,7 +16,7 @@ class Group(object):
         self.users.append(user)
         user.group = self
 
-    def length(self):
+    def size(self):
         return len(self.users)
 
     def infect(self, version):
@@ -25,7 +25,7 @@ class Group(object):
             user.infect(version)
 
     def __str__(self):
-        return "Group({}):{}".format(self.length(), self.users)
+        return "Group({}):{}".format(self.size(), self.users)
 
     def __repr__(self):
         return str(self)
@@ -88,7 +88,7 @@ class Network(object):
         # loop until all users have been put into a group
         while not_grouped:
             group = self.find_group(not_grouped)
-            size = group.length()
+            size = group.size()
             # Map size of group to list of groups of that size
             if size in groups:
                 groups[size].append(group)
