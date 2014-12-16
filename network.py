@@ -10,6 +10,7 @@ class Group(object):
             self.users = users
         else:
             self.users = []
+        self.version = None
 
     def add_user(self, user):
         """Add new user to group"""
@@ -48,7 +49,7 @@ class Network(object):
         self.find_groups()
 
     def load_data(self):
-        # Used to temporarily map user names to instances before connections are made
+        # Temporarily map user names to instances before connections are made
         temp_user_dict = {}
         User.user_id = 0
 
@@ -69,7 +70,7 @@ class Network(object):
 
     def find_group(self, not_grouped):
         """Find new group within not yet grouped users"""
-        to_search = set([not_grouped[0]])
+        to_search = {not_grouped[0]}
         group = Group()
         # Loop until no more connections to add
         while to_search:
@@ -117,15 +118,15 @@ class RandomNetwork(Network):
     min_students - Minimum number of students a user can have
     max_students - Maximum number of students a user can have
     """
-    def __init__(self, num_users, min_students, max_students):
+    def __init__(self, num_users, num_coaches, students):
         # Generate list of users
         User.user_id = 0
         self.users = [User() for _ in range(num_users)]
-        for user in self.users:
-            num_students = random.randint(min_students, min(max_students, num_users))
+        min_students, max_students = students
+        for user in random.sample(self.users, num_coaches):
+            num_students = random.randint(max(min_students, 0),
+                                          min(max_students, num_users))
             # Randomly sample users to add as students for a user
             students = random.sample(self.users, num_students)
             user.add_students(students)
         super(RandomNetwork, self).__init__()
-
-

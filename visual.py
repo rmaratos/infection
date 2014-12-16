@@ -11,22 +11,25 @@ def distance(x0, y0, x1, y1):
 
 class VisualUser(object):
     """
-    User as represented visually on screen, a circle containing its name and version
+    User as represented visually on screen:
+        a circle containing its name and version
 
-    The VisualUser object contains a reference to an instance of the User class as well as its parent.
+    The VisualUser object contains a reference to an instance of the User class
+    as well as its parent.
     """
     def __init__(self, user, parent):
         self.width, self.height = parent.width, parent.height
         self.parent = parent
         self.canvas = parent.canvas
         self.user = user
-        # Give user class reference to visual class, useful when looping over students and coaches
+        # Give user class reference to visual class
+        # useful when looping over students and coaches
         self.user.visual = self
         self.r = 25
-        self.top = parent.margin + self.r
+        self.top = self.r
         # Randomly place user on screen
-        self.x = random.randint(self.top, self.width - self.r)
-        self.y = random.randint(self.top, self.height - self.r)
+        self.x = random.randint(self.r+1, self.width - self.r-1)
+        self.y = random.randint(self.r+1, self.height - self.r-1)
         # Initially still
         self.vx = self.vy = 0
 
@@ -35,6 +38,15 @@ class VisualUser(object):
         for student in self.user.students:
             x1, y1 = student.visual.x, student.visual.y
             self.canvas.create_line(x0, y0, x1, y1)
+            # Draw suckle
+            dx, dy = (x1-x0), (y1-y0)
+            d = distance(x0, y0, x1, y1)
+            scale = self.r/d
+            x2, y2 = x0 + scale*dx, y0 + scale*dy
+            small_r = 3
+            self.canvas.create_oval(x2-small_r, y2-small_r,
+                                    x2+small_r, y2+small_r,
+                                    fill="black")
 
     def draw(self):
         x, y = self.x, self.y
@@ -51,9 +63,9 @@ class VisualUser(object):
         Updates user's velocity on the screen
 
         Users are attracted to the users they either teach or coach.
-        They are also repelled by any user if they get within buffer of each other.
-        This heuristic helps convince the linked users to form a shape in which every
-        group can be identified and not overlap
+        Also repelled by any user if they get within buffer of each other.
+        This heuristic helps convince the linked users to form a shape in which
+        every group can be identified and not overlap
         """
         # Acceleration is memoryless and recalculated every frame
         ax = ay = 0
@@ -98,7 +110,7 @@ class VisualUser(object):
         if self.x > self.width - self.r or self.x < self.r:
             self.x -= 2*self.vx
             self.vx = 0
-        if self.y > self.height - self.r or self.y < self.top:
+        if self.y > self.height - self.r or self.y < self.r:
             self.y -= 2*self.vy
             self.vy = 0
 
@@ -146,8 +158,9 @@ class Visual(object):
         self.margin = 0.12*height
         self.width, self.height = width, height - self.margin
         self.cx, self.cy = width/2, (height - self.margin)/2
-        self.toolbar_canvas = Canvas(self.root, width=self.width, height=self.margin)
-        self.toolbar_canvas.pack()
+        self.toolbar = \
+            Canvas(self.root, width=self.width, height=self.margin)
+        self.toolbar.pack()
         self.canvas = Canvas(root, width=width, height=height - self.margin)
         self.canvas.pack()
         self.init_animation()
@@ -178,28 +191,47 @@ class Visual(object):
         """User setup screen"""
         self.canvas.delete(ALL)
         cx, cy = self.width/2, self.height/2
+        text = "Number of Users (1-{})".format(self.max_users)
+        font = ("Impact", 24)
+        self.canvas.create_text(cx, 0.4*cy, text=text, font=font)
         self.num_users_entry = Entry(self.canvas, justify=CENTER)
         self.canvas.create_window(cx, 0.5*cy, window=self.num_users_entry)
         self.num_users_entry.insert(0, str(self.default_users))
-        self.canvas.create_text(cx, 0.4*cy, text="Number of Users (1-100)", font=("Impact", 24))
+
+        text = "Number of Coaches"
+        self.canvas.create_text(cx, 0.6*cy, text=text, font=font)
+        self.num_coaches_entry = Entry(self.canvas, justify=CENTER)
+        self.canvas.create_window(cx, 0.7*cy, window=self.num_coaches_entry)
+        self.num_coaches_entry.insert(0, str(self.default_coaches))
+
+        text = "Max Number of Students"
+        self.canvas.create_text(cx, 0.8*cy, text=text, font=font)
+        self.num_students_entry = Entry(self.canvas, justify=CENTER)
+        self.canvas.create_window(cx, 0.9*cy, window=self.num_students_entry)
+        self.num_students_entry.insert(0, str(self.default_students))
+
         self.button = Button(cx, 1.5*cy, 0.3*cx, 0.2*cy, "Begin")
         self.button.draw(self.canvas)
 
     def draw_toolbar(self):
         """Toolbar for main animation"""
-        self.toolbar_canvas.create_text(self.cx, 0.1*self.cy, text="INFECTION", font=("Impact", 32))
-        font = ("Impact", 20)
-        text = "Total Infection: Click User"
-        self.toolbar_canvas.create_text(self.cx*0.05, 0.1*self.cy, text=text, font=font, anchor="w")
-        self.toolbar_canvas.create_text(self.cx*1.8, 0.1*self.cy, text="Limited Infection", font=font, anchor="e")
-        self.limited_entry = Entry(self.toolbar_canvas, justify=CENTER, width=3)
-        self.toolbar_canvas.create_window(self.cx*1.85, 0.1*self.cy, window=self.limited_entry)
+        self.toolbar.create_text(self.cx, 0.1*self.cy, text="INFECTION",
+                                 font=("Impact", 32))
+        self.toolbar.create_text(self.cx*0.05, 0.1*self.cy,
+                                 text="Total Infection: Click User",
+                                 font=("Impact", 20), anchor="w")
+        self.toolbar.create_text(self.cx*1.8, 0.1*self.cy,
+                                 text="Limited Infection",
+                                 font=("Impact", 20), anchor="e")
+        self.limited_entry = Entry(self.toolbar, justify=CENTER, width=3)
+        self.toolbar.create_window(self.cx*1.85, 0.1*self.cy,
+                                   window=self.limited_entry)
         self.limited_entry.insert(0, str(self.default_users//2))
         cx, cy = self.cx*1.95, self.margin*0.35
         r = self.margin/5
         self.limited_button = (cx, cy, r)
-        self.toolbar_canvas.create_oval((cx-r, cy-r, cx+r, cy+r), width=2, fill="RED")
-        self.toolbar_canvas.create_text(cx, cy, text="X", font=("Courier Bold", 30))
+        self.toolbar.create_oval((cx-r, cy-r, cx+r, cy+r), width=2, fill="RED")
+        self.toolbar.create_text(cx, cy, text="X", font=("Courier Bold", 30))
         side = self.width/self.versions
         self.side = side
         y = 50
@@ -207,8 +239,8 @@ class Visual(object):
         for col in range(int(self.versions)):
             fill = self.get_fill(col)
             width = 2 if col == self.version else 0
-            self.toolbar_canvas.create_rectangle(col*side, y, (col+1)*side, y+side, fill=fill, width=width)
-            #self.toolbar_canvas.create_text(col*side + side/2, y+side/2, text=str(col), font="Arial 10")
+            self.toolbar.create_rectangle(col*side, y, (col+1)*side, y+side,
+                                          fill=fill, width=width)
         self.select_version()
 
     def redraw_all(self):
@@ -238,17 +270,17 @@ class Visual(object):
             return "white"
         b = 0
         quarter = self.versions/4
-        if v < quarter:
+        if v < quarter:  # Red -> Yellow
             r = 255
             g = int(255*min((v/quarter), 1))
-        elif quarter <= v < 2*quarter:
+        elif quarter <= v < 2*quarter:  # Yellow -> Green
             r = int(255*max(0, (1-(v-quarter)/quarter)))
             g = 255
-        elif 2*quarter <= v < 3*quarter:
+        elif 2*quarter <= v < 3*quarter:  # Green -> Blue
             r = 0
             g = int(255*max(0, (1-(v-2*quarter)/quarter)))
             b = int(255*min(((v-2*quarter)/quarter), 1))
-        else:
+        else:  # Blue -> Purple
             g = 0
             r = int(255*min(((v-3*quarter)/quarter), 1))
             b = 255
@@ -260,21 +292,20 @@ class Visual(object):
         self.start_counter += 1
         x = random.randint(0, self.width)
         y = random.randint(0, self.height)
-        self.canvas.create_rectangle(x, y, x+2, y+2, width=1, fill=fill)
+        self.canvas.create_rectangle(x, y, x+2, y+2, width=0, fill=fill)
 
     def timer_fired(self):
         """Called every frame refresh"""
         if self.mode == Mode.START:
             for _ in range(10):
                 self.draw_random_point()
-        if self.mode == Mode.MAIN:
+        if self.mode == Mode.MAIN and not self.paused:
             self.update_locations()
+            self.redraw_all()
 
     def timer(self):
         """Setup timer loop"""
-        if self.mode == Mode.MAIN and not self.paused:
-            self.timer_fired()
-            self.redraw_all()
+        self.timer_fired()
         self.canvas.after(self.timer_delay, self.timer)
 
     def init_animation(self):
@@ -284,6 +315,9 @@ class Visual(object):
         self.start_counter = 0
         self.versions = 40
         self.default_users = 20
+        self.default_coaches = 5
+        self.default_students = 5
+        self.max_users = 100
         self.version = None
         self.paused = False
         self.mode = Mode.START
@@ -296,20 +330,35 @@ class Visual(object):
     def start_infection(self):
         """Initialize users and start infections"""
         num_users_text = self.num_users_entry.get()
+        num_coaches_text = self.num_coaches_entry.get()
+        num_students_text = self.num_students_entry.get()
         try:
+            error = "Invalid Number of Users"
             num_users = int(num_users_text)
-            if not (1 <= num_users <= 100):
+            if not (1 <= num_users <= self.max_users):
+                raise ValueError
+            num_coaches = int(num_coaches_text)
+            error = "Invalid Number of Coaches"
+            if not (1 <= num_coaches <= num_users):
+                raise ValueError
+            error = "Invalid Number of Students"
+            num_students = int(num_students_text)
+            if not (1 <= num_students <= num_users):
                 raise ValueError
         except ValueError:
-            text = "Please enter a number between 1-100"
-            font = ("Impact", self.error_font_size)
             if self.error_text:
                 self.canvas.delete(self.error_text)
-            self.error_text = self.canvas.create_text(self.cx, 0.6*self.cy, text=text, font=font)
+            self.error_text = \
+                self.canvas.create_text(self.cx, 0.2*self.cy,
+                                        text=error,
+                                        font=("Impact", self.error_font_size))
             self.error_font_size += 2
             return
-        self.infection = Infection(num_users=num_users, min_students=0, max_students=2)
+        self.infection = Infection(num_users=num_users, num_coaches=num_coaches,
+                                   students=(1, num_students))
         self.num_users = num_users
+        self.num_coaches = num_coaches
+        self.num_students = num_students
         self.raw_users = self.infection.network.users
         self.init_users()
         self.draw_toolbar()
@@ -322,21 +371,20 @@ class Visual(object):
             if not (1 <= size <= self.num_users):
                 raise ValueError
         except ValueError:
-            print("Bad input")
+            print("Bad input")  # TODO: display to user
             return
         self.infection.limited_infection(size, self.version)
         print("Limited infection of size", size, self.num_users)
 
     def select_version(self):
-        print("version_select", self.version_select)
-        if self.version_select:
-            self.toolbar_canvas.delete(self.version_select)
-            print("deleted")
+        if self.version_select:  # Erase old selection
+            self.toolbar.delete(self.version_select)
         if self.version is None:
             return
         y0, y1 = self.gradient
         x0, x1 = self.version*self.side, (self.version + 1)*self.side
-        self.version_select = self.toolbar_canvas.create_rectangle(x0, y0, x1, y1, width="2")
+        self.version_select = \
+            self.toolbar.create_rectangle(x0, y0, x1, y1, width="2")
 
     def mouse_event(self, e):
         """Process click event"""

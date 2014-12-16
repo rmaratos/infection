@@ -16,17 +16,18 @@ class User(object):
         self.version = version
         self.students = []
         self.coaches = []
+        self.group = None
 
     def add_student(self, student):
         """Add student to user, and add this user as their coach"""
-        self.students.append(student)
-        student.coaches.append(self)
+        # Prevent self referential coaching
+        if student is not self:
+            self.students.append(student)
+            student.coaches.append(self)
 
     def add_students(self, students):
         """Add list of students to user"""
         for student in students:
-            # Prevent self referential coaching
-            if student is not self:
                 self.add_student(student)
 
     def infect(self, version):
