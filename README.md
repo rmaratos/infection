@@ -14,9 +14,11 @@ This was a fun and educational project that helped model how to roll out AB test
 
 ## Running
 Visualization
+
 ```$ python3 visual.py```
 
 Instructions:
+
 1. Press s to Begin
 2. Choose number of users, number of coaches, and maximum number of students.
 3. Enjoy the organized chaos. The dalek like suction cup represents a student absorbing information from a coach.
@@ -25,6 +27,7 @@ Instructions:
 6. limited_infection: specify a number of nodes to infect and press the X
 
 Tests
+
 ```$ python3 tests.py```
 
 ## TODO
