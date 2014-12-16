@@ -21,6 +21,7 @@ class Group(object):
 
     def infect(self, version):
         """Infect all users within a group with version"""
+        self.version = version
         for user in self.users:
             user.infect(version)
 
@@ -49,6 +50,7 @@ class Network(object):
     def load_data(self):
         # Used to temporarily map user names to instances before connections are made
         temp_user_dict = {}
+        User.user_id = 0
 
         # Create all users
         for user in self.user_data:
@@ -117,9 +119,10 @@ class RandomNetwork(Network):
     """
     def __init__(self, num_users, min_students, max_students):
         # Generate list of users
+        User.user_id = 0
         self.users = [User() for _ in range(num_users)]
         for user in self.users:
-            num_students = random.randint(min_students, max_students)
+            num_students = random.randint(min_students, min(max_students, num_users))
             # Randomly sample users to add as students for a user
             students = random.sample(self.users, num_students)
             user.add_students(students)
